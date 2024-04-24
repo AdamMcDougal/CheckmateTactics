@@ -37,7 +37,7 @@ const ItemList = ({ items }) => (
 
 const ParticipantRow = ({ participant }) => {
   const rowColor =
-    participant.teamId === 100 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(248, 113, 113, 0.2)';
+    participant.teamId === 100 ? 'rgba(59, 130, 246, 0.6)' : 'rgba(248, 113, 113, 0.6)';
 
   return (
     <tr style={{ backgroundColor: rowColor }}>
@@ -87,7 +87,7 @@ const TeamTable = ({ team, participants }) => (
 
 
 const GameDetails = ({ gameData, index }) => (
-  <div className="bg-gray-200 my-4 p-4 font-bold">
+  <div className="bg-gray-200 p-4 font-bold" >
     <h3 className="text-center text-2xl pb-2">Game {index + 1}</h3>
     <TeamTable team={gameData.info.teams[0]} participants={gameData.info.participants} />
     <TeamTable team={gameData.info.teams[1]} participants={gameData.info.participants} />
@@ -98,27 +98,41 @@ const GameDetails = ({ gameData, index }) => (
 export default function Home() {
   const [searchText, setSearchText] = useState("");
   const [gameList, setGameList] = useState([]);
+  const [showContent, setShowContent] = useState(false);
+  const [error, setError] = useState(false); // Add state for error handling
 
   const getPlayerGames = () => {
     axios
       .get(`http://localhost:4000/past5Games`, { params: { username: searchText } })
       .then((response) => {
         setGameList(response.data);
+        setShowContent(true);
+        setError(false); // Reset error state on successful response
       })
-      .catch((error) => console.log(error));
+      .catch((error) => {
+        console.log(error);
+        setGameList([]); // Clear game list on error
+        setShowContent(true);
+        setError(true); // Set error state to true
+      });
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="h-screen bg-cyan-200 bg-cover mx-auto" style={{ backgroundImage: "url('https://cdna.artstation.com/p/assets/images/images/001/207/466/large/suke-22.jpg?1442249023')", height: "900px" }}>
       <PlayerSearch setSearchText={setSearchText} getPlayerGames={getPlayerGames} />
-      {gameList.length !== 0 ? (
+      {showContent && gameList.length !== 0 ? (
         <>
           {gameList.map((gameData, index) => (
             <GameDetails key={index} gameData={gameData} index={index} />
           ))}
         </>
       ) : (
-        <p className="text-center">No games found</p>
+        showContent && (
+          <div className="text-center font-extrabold text-4xl bg-white">
+            {error ? "Error occurred while fetching games" : "No games found for user " + '"' + searchText + '"' + ", please enter an active summoner!"}
+            <p>Eg. Rikiroll, Gleefulporcupine.</p>
+          </div>
+        )
       )}
     </div>
   );
